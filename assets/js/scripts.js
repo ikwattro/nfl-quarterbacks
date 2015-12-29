@@ -101,7 +101,6 @@ new Vue({
 				totalStats.RshTD += row[18];
 			}
 			this.totalStats = totalStats;
-			console.log(this.totalStats);
 		}
 	},
 
