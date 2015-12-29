@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="TruMedia Networks Project">
+	<meta name="author" content="Travis Flatt">
+
+	<title>TruMedia Networks Project</title>
+	
+	<link rel="stylesheet" href="assets/css/styles.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://bootswatch.com/flatly/bootstrap.min.css">
+
+	<!--[if lt IE 9]>
+	<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+</head>
+
+<body>
+	<div id="wrapper">
+
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper">
+            <ul class="sidebar-nav" role="tablist">
+                <li role="presentation" class="sidebar-brand active">
+                    <a href="#home" aria-controls="home" role="tab" data-toggle="tab">
+                        Quarterbacks
+                    </a>
+                </li>
+                <li v-for="player in players" role="presentation">
+                    <a href="#player-detail" aria-controls="player-detail" role="tab" data-toggle="tab" @click="getPlayerData(player.id)">{{ player.text }}</a>
+                </li>
+            </ul>
+        </div>
+        <!-- /#sidebar-wrapper -->
+
+        <!-- Page Content -->
+        <div id="page-content-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <a href="#menu-toggle" class="btn btn-default" id="menu-toggle" @click="toggleMenu">Toggle Menu</a>
+                    </div>
+                </div>
+                <div class="row">
+                	<div class="col-lg-12">
+                		<div class="tab-content">
+                			<div class="tab-pane fade in active" id="home">
+                				Home Tab Content
+                			</div>
+                			<div class="tab-pane fade" id="player-detail" v-cloak>
+                                <div class="panel panel-default" :class="playerTeam">
+                                    <div class="panel-heading">
+                                        <h3 class="panel-title">{{ playerName }}</h3>
+                                        <img :src="playerTeamImg" >
+                                    </div>
+                                    <div class="panel-body">
+                                        <div class="container-fluid">
+                                            <div class="row">
+                                                <div class="col-sm-3">
+                                                    <img :src="playerImg">
+                                                </div>
+                                                <div class="col-sm-9">
+                                                    <ul class="nav nav-tabs" role="tablist">
+                                                        <li role="presentation" class="active">
+                                                            <a href="#totals" aria-controls="totals" role="tab" data-toggle="tab" @click="getTotalStats()">Totals</a>
+                                                        </li>
+                                                        <li role="presentation" v-for="(index, season) in seasonYears">
+                                                            <a href="#year-{{ index }}" aria-controls="year-{{ index }}" role="tab" data-toggle="tab" @click="getSeasonStats(season)">{{ season }}</a>
+                                                        </li>
+                                                    </ul>
+                                                    <div class="tab-content">
+                                                        <div role="tabpanel" class="tab-pane active" id="totals" :class="playerTeam" transition="fade">
+                                                            <h4>Total Passing</h4>
+                                                            <table class="table table-striped" :class="playerTeam">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>CMP</th>
+                                                                        <th>ATT</th>
+                                                                        <th>CMP&#37;</th>
+                                                                        <th>YDS</th>
+                                                                        <th>YDS/ATT</th>
+                                                                        <th>TD</th>
+                                                                        <th>INT</th>
+                                                                        <th>Sack</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td>{{ totalStats.Cmp }}</td>
+                                                                        <td>{{ totalStats.Att }}</td>
+                                                                        <td>{{ ((totalStats.Cmp / totalStats.Att) * 100).toFixed(1) }}&#37;</td>
+                                                                        <td>{{ totalStats.PsYds }}</td>
+                                                                        <td>{{ (totalStats.PsYds / totalStats.Att).toFixed(2) }}</td>
+                                                                        <td>{{ totalStats.PsTD }}</td>
+                                                                        <td>{{ totalStats.Int }}</td>
+                                                                        <td>{{ totalStats.Sack }}</td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                            <h4>Total Rushing</h4>
+                                                            <table class="table table-striped" :class="playerTeam">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>ATT</th>
+                                                                        <th>YDS</th>
+                                                                        <th>AVG</th>
+                                                                        <th>TD</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td>{{ totalStats.Rush }}</td>
+                                                                        <td>{{ totalStats.RshYds }}</td>
+                                                                        <td>{{ (totalStats.RshYds / totalStats.Rush).toFixed(1) }}</td>
+                                                                        <td>{{ totalStats.RshTD }}</td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                        <template v-for="(index, season) in seasonYears">
+                                                            <div role="tabpanel" class="tab-pane" id="year-{{index}}" transition="fade">
+                                                                <h4>{{ season }} Passing</h4>
+                                                            <table class="table table-striped" :class="playerTeam">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>CMP</th>
+                                                                        <th>ATT</th>
+                                                                        <th>CMP&#37;</th>
+                                                                        <th>YDS</th>
+                                                                        <th>YDS/ATT</th>
+                                                                        <th>TD</th>
+                                                                        <th>INT</th>
+                                                                        <th>Sack</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td>{{ seasonStats.Cmp }}</td>
+                                                                        <td>{{ seasonStats.Att }}</td>
+                                                                        <td>{{ ((seasonStats.Cmp / seasonStats.Att) * 100).toFixed(1) }}&#37;</td>
+                                                                        <td>{{ seasonStats.PsYds }}</td>
+                                                                        <td>{{ (seasonStats.PsYds / seasonStats.Att).toFixed(2) }}</td>
+                                                                        <td>{{ seasonStats.PsTD }}</td>
+                                                                        <td>{{ seasonStats.Int }}</td>
+                                                                        <td>{{ seasonStats.Sack }}</td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                            <h4>{{ season }} Rushing</h4>
+                                                            <table class="table table-striped" :class="playerTeam">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>ATT</th>
+                                                                        <th>YDS</th>
+                                                                        <th>AVG</th>
+                                                                        <th>TD</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td>{{ seasonStats.Rush }}</td>
+                                                                        <td>{{ seasonStats.RshYds }}</td>
+                                                                        <td>{{ (seasonStats.RshYds / seasonStats.Rush).toFixed(1) }}</td>
+                                                                        <td>{{ seasonStats.RshTD }}</td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                			</div>
+                		</div>
+                	</div>
+                </div>
+            </div>
+        </div>
+        <!-- /#page-content-wrapper -->
+
+    </div>
+
+	<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/1.0.13/vue.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore.js"></script>
+	<script src="assets/js/scripts.js"></script>
+	
+</body>
+</html>
