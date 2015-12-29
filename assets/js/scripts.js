@@ -68,6 +68,8 @@ new Vue({
 		getSeasonStats: function(season) {
 
 			var seasonStats = new StatsBlock();
+			var ypaChartData = [];
+			var cmpChartData = [];
 
 			for(var i = 0; i < this.playerStats.rows.length; i++) {
 				var row = this.playerStats.rows[i];
@@ -81,13 +83,20 @@ new Vue({
 					seasonStats.Rush += row[16];
 					seasonStats.RshYds += row[17];
 					seasonStats.RshTD += row[18];
+					ypaChartData.push([row[5], parseFloat((row[14]/row[10]).toFixed(1))]);
+					cmpChartData.push([row[5], parseFloat(((row[11]/row[10])*100).toFixed(1))]);
 				}
 			}
 			this.seasonStats = seasonStats;
+
+			this.buildCharts(ypaChartData, cmpChartData);
 		},
 
 		getTotalStats: function() {
 			var totalStats = new StatsBlock();
+			var ypaChartData = [];
+			var cmpChartData = [];
+
 			for(var i = 0; i < this.playerStats.rows.length; i++) {
 				var row = this.playerStats.rows[i];
 				totalStats.Att += row[10];
@@ -99,8 +108,59 @@ new Vue({
 				totalStats.Rush += row[16];
 				totalStats.RshYds += row[17];
 				totalStats.RshTD += row[18];
+				ypaChartData.push([row[5], parseFloat((row[14]/row[10]).toFixed(1))]);
+				cmpChartData.push([row[5], parseFloat(((row[11]/row[10])*100).toFixed(1))]);
 			}
+
 			this.totalStats = totalStats;
+
+			// Build Charts
+			this.buildCharts(ypaChartData, cmpChartData);
+		},
+
+		buildCharts: function(ypa, cmp) {
+			// Build Charts
+			$('#yards-per-attempt').highcharts({
+		        chart: {
+		            type: 'line',
+		        },
+		        title: {
+		            text: 'Yards per Attempt'
+		        },
+		        xAxis: {
+		       
+		        },
+		        yAxis: {
+		            title: {
+		                text: 'Yards per Attempt'
+		            }
+		        },
+		        series: [{
+		            name: 'YPA',
+		            data: ypa
+		        }]
+		    });
+
+		    $('#completion-percentage').highcharts({
+		        chart: {
+		            type: 'line',
+		        },
+		        title: {
+		            text: 'Completion Percentage'
+		        },
+		        xAxis: {
+		        
+		        },
+		        yAxis: {
+		            title: {
+		                text: 'Completion %'
+		            }
+		        },
+		        series: [{
+		            name: 'CMP%',
+		            data: cmp
+		        }]
+		    });
 		}
 	},
 
