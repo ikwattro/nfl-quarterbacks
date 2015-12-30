@@ -165,6 +165,19 @@ table.CIN thead tr th {
     color: #FFFFFF;
 }
 
+/* Bootstrap/Highcharts Hack: fix content width inside hidden tabs */
+.tab-content > .tab-pane,
+.pill-content > .pill-pane {
+    display: block;     /* undo display:none          */
+    height: 0;          /* height:0 is also invisible */ 
+    overflow-y: hidden; /* no-overflow                */
+}
+.tab-content > .active,
+.pill-content > .active {
+    height: auto;       /* let the content decide it  */
+} /* Bootstrap/Highcharts Hack DONE! 
+Thanks to: https://github.com/ryenus */
+
 @media(min-width:768px) {
     #wrapper {
         padding-left: 250px;

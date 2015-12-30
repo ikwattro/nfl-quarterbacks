@@ -11,6 +11,31 @@ function StatsBlock() {
 	this.RshTD = 0;
 };
 
+function ChartStat(row) {
+	this.x = Date.parse(row[5]),
+	this.y = null,
+	this.year = row[3],
+	this.week = row[4],
+	this.game = {
+		team: row[6],
+		teamImg: row[7],
+		opp: row[8],
+		oppImg: row[9]
+	},
+	this.stats = {
+		Att: row[10],
+		Cmp: row[11],
+		Sack: row[12],
+		Int: row[13],
+		PsYds: row[14],
+		PsTD: row[15],
+		Rush: row[16],
+		RshYds: row[17],
+		RshTD: row[18]
+	},
+	this.name = "Week " + row[4] + ", " + row[3]
+} 
+
 new Vue({
 	el: 'body',
 	data: {
@@ -62,15 +87,14 @@ new Vue({
 			}
 			this.seasonYears = _.uniq(years);
 			this.getTotalStats();
-			$('a[href="#totals"').tab('show');
 		},
 
 		getSeasonStats: function(season) {
 
-			var seasonStats = new StatsBlock();
-			var ypaChartData = [];
-			var cmpChartData = [];
-			var team = "";
+			var seasonStats = new StatsBlock(),
+				ypaChartData = [],
+				cmpChartData = [],
+				team = "";
 
 			for(var i = 0; i < this.playerStats.rows.length; i++) {
 				var row = this.playerStats.rows[i];
@@ -85,17 +109,20 @@ new Vue({
 					seasonStats.RshYds += row[17];
 					seasonStats.RshTD += row[18];
 					
-					if (parseFloat((row[14]/row[10]).toFixed(1)) >= 0) {
-						ypaChartData.push([row[5], parseFloat((row[14]/row[10]).toFixed(1))]);
-					} else {
-						ypaChartData.push([row[5], null]);
+					var ypaData = new ChartStat(row);
+
+					if(parseFloat((row[14]/row[10]).toFixed(1)) >= 0 ) {
+						ypaData.y = parseFloat((row[14]/row[10]).toFixed(1));
 					}
 
+					ypaChartData.push(ypaData); 
+
+					var cmpData = new ChartStat(row);
+
 					if(parseFloat(((row[11]/row[10])*100).toFixed(1)) >= 0) {
-						cmpChartData.push([row[5], parseFloat(((row[11]/row[10])*100).toFixed(1))]);
-					} else {
-						cmpChartData.push([row[5], null]);
+						cmpData.y = parseFloat(((row[11]/row[10])*100).toFixed(1));
 					}
+					cmpChartData.push(cmpData); 
 
 					team = row[6];
 				}
@@ -106,10 +133,10 @@ new Vue({
 		},
 
 		getTotalStats: function() {
-			var totalStats = new StatsBlock();
-			var ypaChartData = [];
-			var cmpChartData = [];
-			var team = "";
+			var totalStats = new StatsBlock(),
+				ypaChartData = [],
+				cmpChartData = [],
+				team = "";
 
 			for(var i = 0; i < this.playerStats.rows.length; i++) {
 				var row = this.playerStats.rows[i];
@@ -123,30 +150,7 @@ new Vue({
 				totalStats.RshYds += row[17];
 				totalStats.RshTD += row[18];
 
-				var ypaData = {
-					x: Date.parse(row[5]),
-					y: null,
-					year: row[3],
-					week: row[4],
-					game: {
-						team: row[6],
-						teamImg: row[7],
-						opp: row[8],
-						oppImg: row[9]
-					},
-					stats: {
-						Att: row[10],
-						Cmp: row[11],
-						Sack: row[12],
-						Int: row[13],
-						PsYds: row[14],
-						PsTD: row[15],
-						Rush: row[16],
-						RshYds: row[17],
-						RshTD: row[18]
-					},
-					name: "Week " + row[4] + ", " + row[3]
-				};
+				var ypaData = new ChartStat(row);
 
 				if(parseFloat((row[14]/row[10]).toFixed(1)) >= 0 ) {
 					ypaData.y = parseFloat((row[14]/row[10]).toFixed(1));
@@ -154,30 +158,7 @@ new Vue({
 
 				ypaChartData.push(ypaData); 
 
-				var cmpData = {
-					x: Date.parse(row[5]),
-					y: null,
-					year: row[3],
-					week: row[4],
-					game: {
-						team: row[6],
-						teamImg: row[7],
-						opp: row[8],
-						oppImg: row[9]
-					},
-					stats: {
-						Att: row[10],
-						Cmp: row[11],
-						Sack: row[12],
-						Int: row[13],
-						PsYds: row[14],
-						PsTD: row[15],
-						Rush: row[16],
-						RshYds: row[17],
-						RshTD: row[18]
-					},
-					name: "Week " + row[4] + ", " + row[3]
-				};
+				var cmpData = new ChartStat(row);
 
 				if(parseFloat(((row[11]/row[10])*100).toFixed(1)) >= 0) {
 					cmpData.y = parseFloat(((row[11]/row[10])*100).toFixed(1));
@@ -189,14 +170,13 @@ new Vue({
 			this.totalStats = totalStats;
 			// Build Charts
 			this.buildCharts(ypaChartData, cmpChartData, team);
+
 		},
 
 		buildCharts: function(ypa, cmp, team) {
 			// Build Charts
-			var primary = '';
-			var secondary = '';
-
-			console.log(ypa);
+			var primary = '',
+				secondary = '';
 
 			switch(team) {
 				case 'CIN':
@@ -252,7 +232,6 @@ new Vue({
 		            name: 'YPA',
 		            data: ypa,
 		            color: secondary,
-		            dashStyle: "ShortDashDotDot"
 		        }]
 		    });
 
@@ -287,3 +266,4 @@ new Vue({
 
 	},
 });
+
