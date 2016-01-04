@@ -11,8 +11,39 @@ function StatsBlock() {
 	this.RshTD = 0;
 };
 
+function CareerStatsBlock(stats, type) {
+	this.years = [];
+	this.rows = [];
+	for(var i = 0; i < stats.length; i++) {
+		this.years.push(stats[i].year);
+	}
+
+	this.years = _.uniq(this.years);
+
+	_.each(this.years, function(el, index, list) {
+		var statsByYear = _.filter(stats, {year: el}),
+			attempts = 0,
+			completions = 0,
+			yards = 0,
+			y = 0,
+			that = this;
+		_.each(statsByYear, function(el, index, list) {
+			attempts += parseInt(el.stats.Att);
+			completions += parseInt(el.stats.Cmp);
+			yards += parseInt(el.stats.PsYds);
+		}, that);
+		this.rows.push({
+			attempts: attempts,
+			completions: completions,
+			yards: yards,
+			y: (type === "ypa") ? Number(parseFloat(yards/attempts).toFixed(1)) : Number(parseFloat((completions/attempts)*100).toFixed(1))
+		});
+	}, this);
+
+}
+
 function ChartStat(row) {
-	this.x = Date.parse(row[5]),
+	this.datetime = Date.parse(row[5]),
 	this.y = null,
 	this.year = row[3],
 	this.week = row[4],
@@ -33,7 +64,27 @@ function ChartStat(row) {
 		RshYds: row[17],
 		RshTD: row[18]
 	},
-	this.name = "Week " + row[4] + ", " + row[3]
+	this.name = "Week " + row[4] + ", " + row[3];
+}
+
+function Team(team) {
+	switch(team) {
+		case 'CIN':
+			this.primary = "#FB4F14";
+			this.secondary = "#FFFFFF";
+			break;
+		case 'DAL':
+			this.primary = "#0D254C";
+			this.secondary = "#C5CED6";
+			break;
+		case 'NE':
+			this.primary = "#0D254C";
+			this.secondary = "#D6D6D6";
+			break;
+		default:
+			this.primary = "#7CB5EC";
+			this.secondary = "#EFEFEF";
+	}
 } 
 
 new Vue({
@@ -129,7 +180,7 @@ new Vue({
 			}
 			this.seasonStats = seasonStats;
 
-			this.buildCharts(ypaChartData, cmpChartData, team);
+			this.buildSeasonCharts(ypaChartData, cmpChartData, team);
 		},
 
 		getTotalStats: function() {
@@ -169,46 +220,29 @@ new Vue({
 
 			this.totalStats = totalStats;
 			// Build Charts
-			this.buildCharts(ypaChartData, cmpChartData, team);
+			this.buildTotalCharts(ypaChartData, cmpChartData, team);
 
 		},
 
-		buildCharts: function(ypa, cmp, team) {
-			// Build Charts
-			var primary = '',
-				secondary = '';
+		buildTotalCharts: function(ypa, cmp, team) {
+			var careerStatsYPA = new CareerStatsBlock(ypa, "ypa"),
+				careerStatsCMP = new CareerStatsBlock(cmp, "cmp"),
+				seasonTeam = new Team(team);
 
-			switch(team) {
-				case 'CIN':
-					primary = "#FB4F14";
-					secondary = "#FFFFFF";
-					break;
-				case 'DAL':
-					primary = "#0D254C";
-					secondary = "#C5CED6";
-					break;
-				case 'NE':
-					primary = "#0D254C";
-					secondary = "#D6D6D6";
-					break;
-				default:
-					primary = "#7CB5EC";
-					secondary = "#EFEFEF";
-			}
-
+			console.log(careerStatsYPA.rows[0]);
 			$('#yards-per-attempt').highcharts({
-		        chart: {
+				chart: {
 		            type: 'spline',
 		            plotBackgroundColor: {
 		            	linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
 					    stops: [
-					        [0, secondary],
-					        [1, primary],
+					        [0, seasonTeam.secondary],
+					        [1, seasonTeam.primary],
 					    ]
 		            },
-		            plotBorderColor: secondary,
+		            plotBorderColor: seasonTeam.secondary,
 		            plotBorderWidth: 2,
-		            borderColor: primary,
+		            borderColor: seasonTeam.primary,
 		            borderWidth: 2,
 		            className: team,
 		            renderTo: 'yards-per-attempt'
@@ -221,39 +255,214 @@ new Vue({
 		            text: 'Yards per Attempt'
 		        },
 		        xAxis: {
-		       		type: 'date'
+		       		categories: careerStatsYPA.years
 		        },
 		        yAxis: {
 		            title: {
 		                text: 'Yards per Attempt'
 		            }
 		        },
+
+				legend: {
+					enabled: false
+				},
+
 		        series: [{
 		            name: 'YPA',
-		            data: ypa,
-		            color: secondary,
-		        }]
-		    });
+		            data: careerStatsYPA.rows,
+		            color: seasonTeam.secondary,
+		        }],
 
-		    $('#completion-percentage').highcharts({
-		        chart: {
+		        tooltip: {
+		        	useHTML: true,
+		        	borderColor: seasonTeam.primary,
+		        	borderRadius: 5,
+		        	formatter: function() {
+		        		return "Stuff Here"
+		        	}
+		        }
+			});
+
+			$('#completion-percentage').highcharts({
+				chart: {
 		            type: 'spline',
+		            plotBackgroundColor: {
+		            	linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
+					    stops: [
+					        [0, seasonTeam.secondary],
+					        [1, seasonTeam.primary],
+					    ]
+		            },
+		            plotBorderColor: seasonTeam.secondary,
+		            plotBorderWidth: 2,
+		            borderColor: seasonTeam.primary,
+		            borderWidth: 2,
+		            className: team,
+		            renderTo: 'completion-percentage',
+		        },
+		        credits: {
+		        	href: "https://github.com/travtex",
+		        	text: "Hire This Guy"
 		        },
 		        title: {
 		            text: 'Completion Percentage'
 		        },
 		        xAxis: {
-		        	type: 'date'
+		       		categories: careerStatsCMP.years
 		        },
 		        yAxis: {
 		            title: {
-		                text: 'Completion %'
+		                text: 'Completion Percentage'
 		            }
 		        },
+		        
+				legend: {
+					enabled: false
+				},
+
 		        series: [{
 		            name: 'CMP%',
-		            data: cmp
-		        }]
+		            data: careerStatsCMP.rows,
+		            color: seasonTeam.secondary,
+		        }],
+
+		        tooltip: {
+		        	useHTML: true,
+		        	borderColor: seasonTeam.primary,
+		        	borderRadius: 5,
+		        	formatter: function() {
+		        		return "Stuff Here"
+		        	}
+		        }
+			});
+		},
+
+		buildSeasonCharts: function(ypa, cmp, team) {
+			// Build Charts
+			var xCatArray = [],
+				seasonTeam = new Team(team);
+
+			for (var i = 0; i < ypa.length; i++) {
+				xCatArray.push("Week " + ypa[i].week);
+			}
+			console.log(ypa);
+			$('#yards-per-attempt').highcharts({
+		        chart: {
+		            type: 'spline',
+		            plotBackgroundColor: {
+		            	linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
+					    stops: [
+					        [0, seasonTeam.secondary],
+					        [1, seasonTeam.primary],
+					    ]
+		            },
+		            plotBorderColor: seasonTeam.secondary,
+		            plotBorderWidth: 2,
+		            borderColor: seasonTeam.primary,
+		            borderWidth: 2,
+		            className: team,
+		            renderTo: 'yards-per-attempt'
+		        },
+		        credits: {
+		        	href: "https://github.com/travtex",
+		        	text: "Hire This Guy"
+		        },
+		        title: {
+		            text: 'Yards per Attempt'
+		        },
+		        xAxis: {
+		       		categories: xCatArray
+		        },
+		        yAxis: {
+		            title: {
+		                text: 'Yards per Attempt'
+		            }
+		        },
+		        
+				legend: {
+					enabled: false
+				},
+
+		        series: [{
+		            name: 'YPA',
+		            data: ypa,
+		            color: seasonTeam.secondary,
+		        }],
+
+		        tooltip: {
+		        	useHTML: true,
+		        	borderColor: seasonTeam.primary,
+		        	borderRadius: 5,
+		        	formatter: function() {
+		        		return "<h5>"+this.point.name+": </h5><div style='text-align:center;'><img src='"+this.point.game.teamImg+"' style='width:25px;'> vs " + 
+		        				"<img src='"+this.point.game.oppImg+"' style='width:25px;'></div>" +
+		        				"<table class='table table-hover table-condensed'>" +
+		        				"<tr><td>Attempts</td><td>" + this.point.stats.Att + "</td></tr>" +
+		        				"<tr><td>Yards</td><td>" + this.point.stats.PsYds + "</td></tr>" +
+		        				"<tr><td><strong style='color: "+seasonTeam.primary+";'>YPA</strong></td><td><strong>" + this.y + "</strong></td></tr>" +
+		        				"</table>"
+		        	}
+		        }
+		    });
+		
+		    $('#completion-percentage').highcharts({
+
+		        chart: {
+		            type: 'spline',
+		            plotBackgroundColor: {
+		            	linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
+					    stops: [
+					        [0, seasonTeam.secondary],
+					        [1, seasonTeam.primary],
+					    ]
+		            },
+		            plotBorderColor: seasonTeam.secondary,
+		            plotBorderWidth: 2,
+		            borderColor: seasonTeam.primary,
+		            borderWidth: 2,
+		            className: team,
+		            renderTo: 'completion-percentage',
+		        },
+		        credits: {
+		        	href: "https://github.com/travtex",
+		        	text: "Hire This Guy"
+		        },
+		        title: {
+		            text: 'Completion Percentage'
+		        },
+		        xAxis: {
+		       		categories: xCatArray
+		        },
+		        yAxis: {
+		            title: {
+		                text: 'Completion Percentage'
+		            }
+		        },
+		        
+				legend: {
+					enabled: false
+				},
+
+		        series: [{
+		            name: 'CMP%',
+		            data: cmp,
+		            color: seasonTeam.secondary,
+		        }],
+
+		        tooltip: {
+		        	useHTML: true,
+		        	borderColor: seasonTeam.primary,
+		        	borderRadius: 5,
+		        	formatter: function() {
+		        		return "<h5>"+this.point.name+": </h5><div style='text-align:center;'><img src='"+this.point.game.teamImg+"' style='width:25px;'> vs " + 
+		        				"<img src='"+this.point.game.oppImg+"' style='width:25px;'></div>" +
+		        				"<table class='table table-hover table-condensed'>" +
+		        				"<tr><td>Completions</td><td>" + this.point.stats.Cmp + "</td></tr>" +
+		        				"<tr><td>Attmpts</td><td>" + this.point.stats.Att + "</td></tr>" +
+		        				"<tr><td><strong style='color: "+seasonTeam.primary+";'>Cmp %</strong></td><td><strong>" + this.y + "</strong></td></tr>" +
+		        				"</table>"
+		        	}
+		        }
 		    });
 		}
 	},
