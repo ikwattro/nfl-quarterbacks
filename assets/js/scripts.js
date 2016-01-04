@@ -11,6 +11,7 @@ function StatsBlock() {
 	this.RshTD = 0;
 };
 
+// Formats data for Highcharts Total/Career charts
 function CareerStatsBlock(stats, type) {
 	this.years = [];
 	this.rows = [];
@@ -33,6 +34,7 @@ function CareerStatsBlock(stats, type) {
 			yards += parseInt(el.stats.PsYds);
 		}, that);
 		this.rows.push({
+			year: el,
 			attempts: attempts,
 			completions: completions,
 			yards: yards,
@@ -107,10 +109,6 @@ new Vue({
 	},
 
 	methods: {
-		toggleMenu: function(e) {
-			e.preventDefault();
-			$("#wrapper").toggleClass("toggled");
-		},
 
 		getPlayerData: function(player) {
 			var vm = this;
@@ -121,8 +119,28 @@ new Vue({
 				success: function(data) {
 					vm.playerStats = data;
 					vm.processPlayerData();
+					$('a[href="#totals"]').click();
+					$('a[href="#ypa-chart"]').click();
+				},
+				error: function(XMLHttpRequest, textStatus, errorThrown) {
+					console.log("Ajax request failed: " + errorThrown);
+					var errorHtml = "<div class='panel panel-danger'>" +
+									"<div class='panel-heading'>" +
+									"<h4 class='panel-title'>Error</h4>" +
+									"</div>" +
+									"<div class='panel-body'>" +
+									"<p>Something has gone wrong.</p>" +
+									"<p>Please contact Travis to have him fix it.</p>" +
+									"<p>Here is a Cat GIF while you wait:</p>" +
+									"<img src='https://i.imgur.com/TM8yNh.jpg'>" +
+									"</div>" +
+									"<div class='panel-footer'>" +
+									"</div></div>"
+									
+					$('#page-content-wrapper').html(errorHtml);
 				}
 			});
+
 		},
 
 		processPlayerData: function() {
@@ -139,7 +157,7 @@ new Vue({
 			this.seasonYears = _.uniq(years);
 			this.getTotalStats();
 		},
-
+		// Get and process stats for a single season and send to chart builder
 		getSeasonStats: function(season) {
 
 			var seasonStats = new StatsBlock(),
@@ -182,7 +200,7 @@ new Vue({
 
 			this.buildSeasonCharts(ypaChartData, cmpChartData, team);
 		},
-
+		// Get and process total stats for a player and send to chart builder
 		getTotalStats: function() {
 			var totalStats = new StatsBlock(),
 				ypaChartData = [],
@@ -223,13 +241,13 @@ new Vue({
 			this.buildTotalCharts(ypaChartData, cmpChartData, team);
 
 		},
-
+		// Highcharts calls for 'Total' stats charts.
 		buildTotalCharts: function(ypa, cmp, team) {
 			var careerStatsYPA = new CareerStatsBlock(ypa, "ypa"),
 				careerStatsCMP = new CareerStatsBlock(cmp, "cmp"),
 				seasonTeam = new Team(team);
 
-			console.log(careerStatsYPA.rows[0]);
+			// console.log(careerStatsYPA.rows[0]);
 			$('#yards-per-attempt').highcharts({
 				chart: {
 		            type: 'spline',
@@ -278,7 +296,12 @@ new Vue({
 		        	borderColor: seasonTeam.primary,
 		        	borderRadius: 5,
 		        	formatter: function() {
-		        		return "Stuff Here"
+		        		return "<h5 style='text-align:center;'>"+this.point.year+" Totals </h5>" +
+		        				"<table class='table table-hover table-condensed'>" +
+		        				"<tr><td>Cmp/Att</td><td>" + this.point.completions + " / "+this.point.attempts +"</td></tr>" +
+		        				"<tr><td>Yards</td><td>" + this.point.yards + "</td></tr>" +
+		        				"<tr><td><strong style='color: "+seasonTeam.primary+";'>YPA</strong></td><td><strong>" + this.y + "</strong></td></tr>" +
+		        				"</table>"
 		        	}
 		        }
 			});
@@ -331,21 +354,25 @@ new Vue({
 		        	borderColor: seasonTeam.primary,
 		        	borderRadius: 5,
 		        	formatter: function() {
-		        		return "Stuff Here"
+		        		return "<h5 style='text-align:center;'>"+this.point.year+" Totals </h5>" +
+		        				"<table class='table table-hover table-condensed'>" +
+		        				"<tr><td>Cmp/Att</td><td>" + this.point.completions + " / "+this.point.attempts +"</td></tr>" +
+		        				"<tr><td>Yards</td><td>" + this.point.yards + "</td></tr>" +
+		        				"<tr><td><strong style='color: "+seasonTeam.primary+";'>YPA</strong></td><td><strong>" + this.y + "</strong></td></tr>" +
+		        				"</table>"
 		        	}
 		        }
 			});
 		},
-
+		// Highcharts calls for 'Season' stats charts.
 		buildSeasonCharts: function(ypa, cmp, team) {
-			// Build Charts
 			var xCatArray = [],
 				seasonTeam = new Team(team);
 
 			for (var i = 0; i < ypa.length; i++) {
 				xCatArray.push("Week " + ypa[i].week);
 			}
-			console.log(ypa);
+			// console.log(ypa);
 			$('#yards-per-attempt').highcharts({
 		        chart: {
 		            type: 'spline',
@@ -458,21 +485,13 @@ new Vue({
 		        				"<img src='"+this.point.game.oppImg+"' style='width:25px;'></div>" +
 		        				"<table class='table table-hover table-condensed'>" +
 		        				"<tr><td>Completions</td><td>" + this.point.stats.Cmp + "</td></tr>" +
-		        				"<tr><td>Attmpts</td><td>" + this.point.stats.Att + "</td></tr>" +
+		        				"<tr><td>Attempts</td><td>" + this.point.stats.Att + "</td></tr>" +
 		        				"<tr><td><strong style='color: "+seasonTeam.primary+";'>Cmp %</strong></td><td><strong>" + this.y + "</strong></td></tr>" +
 		        				"</table>"
 		        	}
 		        }
 		    });
 		}
-	},
-
-	components: {
-		
-	},
-
-	ready: function() {
-
-	},
+	}
 });
 
