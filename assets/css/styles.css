@@ -48,6 +48,10 @@
     margin-right: -250px;
 }
 
+.chart {
+    cursor: crosshair;
+}
+
 /* Sidebar Styles */
 
 .sidebar-nav {
